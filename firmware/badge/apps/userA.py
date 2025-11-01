@@ -9,6 +9,15 @@ from ui.page import Page
 import ui.styles as styles
 import lvgl
 
+touchwheel_addr = 85
+touchwheel_rgb_set = 15
+
+def colorwheel(pos):
+    if pos < 0 or pos > 255:  return (0, 0, 0)
+    if pos < 85: return (255 - pos * 3, pos * 3, 0)
+    if pos < 170: pos -= 85; return (0, 255 - pos * 3, pos * 3)
+    pos -= 170; return (pos * 3, 0, 255 - pos * 3)
+
 """
 All protocols must be defined in their apps with unique ports. Ports must fit in uint8.
 Try to pick a protocol ID that isn't in use yet; good luck.
@@ -50,7 +59,13 @@ class App(BaseApp):
         """
 
         if self.badge.keyboard.f1():
-            print("Hello ")
+            print("COLORS ")
+            import random
+            (r,g,b) = colorwheel(random.randint(0,255))
+            try:
+                self.badge.sao_i2c.writeto(touchwheel_addr, bytes([touchwheel_rgb_set,r,g,b]))
+            except OSError:
+                pass
         if self.badge.keyboard.f2():
             print("World.  ")
         if self.badge.keyboard.f3():
@@ -83,7 +98,7 @@ class App(BaseApp):
         ## If you want to go fully clean-slate, you can draw straight onto the p.scr object, which should fit the full screen.
         p.create_infobar(["My First App", "Prints to Serial Console"])
         p.create_content()
-        p.create_menubar(["Hello", "World", "Read more", "Hackaday", "Done"])
+        p.create_menubar(["COLORS", "World", "Read more", "Hackaday", "Done"])
         p.replace_screen()
 
 
@@ -93,6 +108,10 @@ class App(BaseApp):
             If you don't have special transition logic, you can delete this method.
         """
         self.p = None
+        try:
+            self.badge.sao_i2c.writeto(touchwheel_addr, bytes([touchwheel_rgb_set,0,0,0]))
+        except OSError:
+            pass
         super().switch_to_background()
 
 
